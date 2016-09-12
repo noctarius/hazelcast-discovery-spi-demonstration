@@ -1,8 +1,22 @@
+/*
+ * Copyright (c) 2008-2016, Hazelcast, Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rest;
 
-import com.sun.org.apache.regexp.internal.RE;
-import com.sun.org.apache.xpath.internal.operations.String;
-
+import javax.inject.Singleton;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -17,10 +31,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+@Singleton
 @Path("api/services")
 public class SimpleRestApi {
 
-    private final ConcurrentMap<String, Set<Address>> addressScopes = new ConcurrentHashMap<String, Set<Address>>();
+    private final ConcurrentMap<String, Set<Address>> addressScopes = new ConcurrentHashMap<>();
 
     @POST
     @Path("{scope}")
@@ -28,7 +43,7 @@ public class SimpleRestApi {
     public Response register(@PathParam("scope") String scope, @QueryParam("host") String host, @QueryParam("port") int port) {
         Set<Address> addresses = getAddresses(scope);
         if (addresses.add(new Address(host, port))) {
-            return Response.ok().entity("{ host: \"" + host + "\", port: " + port + " }").build();
+            return Response.ok().entity("{ \"host\": \"" + host + "\", \"port\": " + port + " }").build();
         }
         return Response.notModified().build();
     }
@@ -49,11 +64,11 @@ public class SimpleRestApi {
     @Produces(MediaType.APPLICATION_JSON)
     public Response services(@PathParam("scope") String scope) {
         Set<Address> addresses = getAddresses(scope);
-        StringBuilder sb = new StringBuilder("{ service: \"" + scope + "\", endpoints: [");
+        StringBuilder sb = new StringBuilder("{ \"service\": \"" + scope + "\", \"endpoints\": [");
         for (Address address : addresses) {
-            sb.append("{ host: \"" + address.host + "\", port: " + address.port + " },");
+            sb.append("{ \"host\": \"" + address.host + "\", \"port\": " + address.port + " },");
         }
-        sb.deleteCharAt(sb.length() - 1).append("]");
+        sb.deleteCharAt(sb.length() - 1).append("] }");
         return Response.ok().entity(sb.toString()).build();
     }
 
@@ -84,12 +99,18 @@ public class SimpleRestApi {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             Address address = (Address) o;
 
-            if (port != address.port) return false;
+            if (port != address.port) {
+                return false;
+            }
             return host != null ? host.equals(address.host) : address.host == null;
         }
 

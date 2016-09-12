@@ -16,8 +16,6 @@
 
 package com.hazelcast.example;
 
-import com.sun.org.apache.xpath.internal.operations.String;
-
 public class Endpoint {
     private final String host;
     private final int port;
