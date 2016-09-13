@@ -29,29 +29,34 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 import static com.hazelcast.example.SomeRestServiceProperties.APPLICATION_SCOPE;
 import static com.hazelcast.example.SomeRestServiceProperties.DISCOVERY_URL;
 
-class SomeRestServiceDiscoveryStrategy
+public class SomeRestServiceDiscoveryStrategy
         extends AbstractDiscoveryStrategy {
 
+    private final String baseUrl;
     private final String applicationScope;
-    private final String discoveryUrl;
 
-    private final DiscoveryNode localNode;
     private final SomeRestService someRestService;
 
-    SomeRestServiceDiscoveryStrategy(DiscoveryNode localNode, ILogger logger, Map<String, Comparable> properties) {
+    private final DiscoveryNode discoveryNode;
+
+    public SomeRestServiceDiscoveryStrategy(DiscoveryNode discoveryNode, ILogger logger, //
+                                            Map<String, Comparable> properties) {
         super(logger, properties);
-        this.localNode = localNode;
+        this.discoveryNode = discoveryNode;
 
-        this.applicationScope = getOrDefault("hazelcast.rest", APPLICATION_SCOPE, "default");
-        this.discoveryUrl = getOrDefault("hazelcast.rest", DISCOVERY_URL, "http://localhost:12345/");
+        this.baseUrl = getOrDefault("discovery.rest", DISCOVERY_URL, "http://localhost:12345/");
+        this.applicationScope = getOrDefault("discovery.rest", APPLICATION_SCOPE, "hazelcast-cluster");
 
-        GsonConverterFactory converter = GsonConverterFactory.create();
-        Retrofit retrofit = new Retrofit.Builder().baseUrl(discoveryUrl).addConverterFactory(converter).build();
+        logger.info("SomeRestService discovery strategy started {url=" //
+                + baseUrl + ", scope=" + applicationScope + "}");
+
+        GsonConverterFactory converterFactory = GsonConverterFactory.create();
+        Retrofit retrofit = new Retrofit.Builder().baseUrl(baseUrl).addConverterFactory(converterFactory).build();
         this.someRestService = retrofit.create(SomeRestService.class);
     }
 
@@ -64,19 +69,17 @@ class SomeRestServiceDiscoveryStrategy
 
     @Override
     public void start() {
-        Address address = localNode.getPrivateAddress();
+        Address address = discoveryNode.getPrivateAddress();
         String host = address.getHost();
         int port = address.getPort();
-
         execute(() -> someRestService.register(applicationScope, host, port));
     }
 
     @Override
     public void destroy() {
-        Address address = localNode.getPrivateAddress();
+        Address address = discoveryNode.getPrivateAddress();
         String host = address.getHost();
         int port = address.getPort();
-
         execute(() -> someRestService.unregister(applicationScope, host, port));
     }
 
@@ -98,9 +101,9 @@ class SomeRestServiceDiscoveryStrategy
         }
     }
 
-    private <T> T execute(Callable<Call<T>> callable) {
+    private <T> T execute(Supplier<Call<T>> supplier) {
         try {
-            Call<T> call = callable.call();
+            Call<T> call = supplier.get();
             return call.execute().body();
         } catch (Exception e) {
             throw new RuntimeException(e);

@@ -24,6 +24,7 @@ import com.hazelcast.spi.discovery.DiscoveryStrategyFactory;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 import static com.hazelcast.example.SomeRestServiceProperties.APPLICATION_SCOPE;
@@ -32,7 +33,8 @@ import static com.hazelcast.example.SomeRestServiceProperties.DISCOVERY_URL;
 public class SomeRestServiceDiscoveryStrategyFactory
         implements DiscoveryStrategyFactory {
 
-    private static final Collection<PropertyDefinition> PROPERTIES = Arrays.asList(APPLICATION_SCOPE, DISCOVERY_URL);
+    private static final Collection<PropertyDefinition> PROPERTY_DEFINITIONS = //
+            Collections.unmodifiableCollection(Arrays.asList(APPLICATION_SCOPE, DISCOVERY_URL));
 
     @Override
     public Class<? extends DiscoveryStrategy> getDiscoveryStrategyType() {
@@ -48,6 +50,6 @@ public class SomeRestServiceDiscoveryStrategyFactory
 
     @Override
     public Collection<PropertyDefinition> getConfigurationProperties() {
-        return PROPERTIES;
+        return PROPERTY_DEFINITIONS;
     }
 }

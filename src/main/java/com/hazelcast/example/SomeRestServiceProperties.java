@@ -18,24 +18,42 @@ package com.hazelcast.example;
 
 import com.hazelcast.config.properties.PropertyDefinition;
 import com.hazelcast.config.properties.SimplePropertyDefinition;
-import com.hazelcast.query.impl.TypeConverters;
+import com.hazelcast.config.properties.ValidationException;
+import com.hazelcast.config.properties.ValueValidator;
+
+import java.net.URL;
+
+import static com.hazelcast.config.properties.PropertyTypeConverter.STRING;
 
 public final class SomeRestServiceProperties {
+
+    private static final ValueValidator URL_VALIDATOR = value -> {
+        String url = value.toString();
+        try {
+            new URL(url);
+        } catch (Exception e) {
+            throw new ValidationException(e);
+        }
+    };
 
     private SomeRestServiceProperties() {
     }
 
     /**
-     * Defines a name for the application scope. All instances registered using the same application scope
-     * will automatically be discovered.
+     * Defines a name for the application scope. All instances registered using the same
+     * application scope will automatically be discovered.
+     * <p/>
+     * <pre>default: hazelcast-cluster</pre>
      */
     public static final PropertyDefinition APPLICATION_SCOPE = //
-            new SimplePropertyDefinition("application.scope", true, TypeConverters.STRING_CONVERTER);
+            new SimplePropertyDefinition("application.scope", true, STRING);
 
     /**
-     * Defines the url of the remote REST API URL for service discovery
+     * Defines the url of the remote REST API URL for service discovery.
+     * <p/>
+     * <pre>default: http://localhost:12345/</pre>
      */
     public static final PropertyDefinition DISCOVERY_URL = //
-            new SimplePropertyDefinition("discovery.url", true, TypeConverters.STRING_CONVERTER);
+            new SimplePropertyDefinition("discovery.url", true, STRING, URL_VALIDATOR);
 
 }

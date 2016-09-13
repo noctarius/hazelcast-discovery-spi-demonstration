@@ -49,7 +49,10 @@ public class DiscoveryTest
 
         discoveryConfig.addDiscoveryStrategyConfig(discoveryStrategyConfig);
 
+        config.getNetworkConfig().setPort(55667);
         HazelcastInstance hazelcastInstance1 = Hazelcast.newHazelcastInstance(config);
+
+        config.getNetworkConfig().setPort(1122);
         HazelcastInstance hazelcastInstance2 = Hazelcast.newHazelcastInstance(config);
 
         assertEquals(2, hazelcastInstance1.getCluster().getMembers().size());
